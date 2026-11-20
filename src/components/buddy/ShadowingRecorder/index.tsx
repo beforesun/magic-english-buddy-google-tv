@@ -27,8 +27,6 @@ export const ShadowingRecorder: React.FC<ShadowingRecorderProps> = ({
   const [isPlayingRecorded, setIsPlayingRecorded] = useState(false);
   const [isPlayingDemo, setIsPlayingDemo] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tvVoiceStatus, setTvVoiceStatus] = useState<string | null>(null);
-  const [isTvMode] = useState(() => Boolean((window as Window & { TVVoice?: object }).TVVoice));
   const [originalAudio] = useState(() => (originalAudioUrl ? new Audio(originalAudioUrl) : null));
   const recordedAudioRef = useRef<HTMLAudioElement | null>(null);
   const playRecordedButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -41,16 +39,6 @@ export const ShadowingRecorder: React.FC<ShadowingRecorderProps> = ({
   useEffect(() => {
     onRecordCompleteRef.current = onRecordComplete;
   }, [onRecordComplete]);
-
-  useEffect(() => {
-    if (!isTvMode) return;
-    const onVoiceStatus = (event: Event) => {
-      const { state, detail } = (event as CustomEvent<{ state: string; detail: string }>).detail;
-      setTvVoiceStatus(`${state === 'error' ? '语音测试：' : ''}${detail}`);
-    };
-    window.addEventListener('tv-voice-status', onVoiceStatus);
-    return () => window.removeEventListener('tv-voice-status', onVoiceStatus);
-  }, [isTvMode]);
 
   useEffect(() => {
     if (!recordingState.audioUrl || !document.documentElement.classList.contains('tv-mode')) return;
@@ -302,22 +290,6 @@ export const ShadowingRecorder: React.FC<ShadowingRecorderProps> = ({
           </button>
         )}
       </div>
-
-      {isTvMode && (
-        <div className={styles.extraControls}>
-          <button
-            className={styles.extraBtn}
-            onClick={() => {
-              const bridge = (window as Window & { TVVoice?: { startRemoteVoiceTest: () => void } }).TVVoice;
-              if (bridge) bridge.startRemoteVoiceTest();
-              else setTvVoiceStatus('当前电视版不支持语音测试');
-            }}
-          >
-            测试遥控器语音识别
-          </button>
-          {tvVoiceStatus && <p role="status">{tvVoiceStatus}</p>}
-        </div>
-      )}
 
       {recordingState.audioUrl && (
         <div className={styles.extraControls}>

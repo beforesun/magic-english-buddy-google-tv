@@ -5,9 +5,6 @@
     <uses-feature android:name="android.software.leanback" android:required="true" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
-    <queries>
-        <intent><action android:name="android.speech.RecognitionService" /></intent>
-    </queries>
     <application android:label="Magic English Buddy TV" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:usesCleartextTraffic="false">
         <activity android:name=".MainActivity" android:exported="true" android:banner="@drawable/tv_banner">
             <intent-filter>
