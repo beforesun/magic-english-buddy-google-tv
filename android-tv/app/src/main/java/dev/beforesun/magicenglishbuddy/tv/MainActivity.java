@@ -54,7 +54,8 @@ public class MainActivity extends Activity {
         });
         webView.setWebChromeClient(new WebChromeClient() {
             @Override public void onPermissionRequest(PermissionRequest request) {
-                if (!ORIGIN.equals(request.getOrigin().toString()) ||
+                if (!"https".equals(request.getOrigin().getScheme()) ||
+                    !"appassets.androidplatform.net".equals(request.getOrigin().getHost()) ||
                     !java.util.Arrays.asList(request.getResources()).contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
                     request.deny(); return;
                 }
@@ -63,6 +64,9 @@ public class MainActivity extends Activity {
                     request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
                     pendingAudio = null;
                 } else requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 1);
+            }
+            @Override public void onPermissionRequestCanceled(PermissionRequest request) {
+                if (pendingAudio == request) pendingAudio = null;
             }
         });
         webView.loadUrl(ORIGIN + "/magic-english-buddy/");
