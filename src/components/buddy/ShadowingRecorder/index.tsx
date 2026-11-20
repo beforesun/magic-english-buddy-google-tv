@@ -29,6 +29,7 @@ export const ShadowingRecorder: React.FC<ShadowingRecorderProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [originalAudio] = useState(() => (originalAudioUrl ? new Audio(originalAudioUrl) : null));
   const recordedAudioRef = useRef<HTMLAudioElement | null>(null);
+  const playRecordedButtonRef = useRef<HTMLButtonElement | null>(null);
   const onRecordCompleteRef = useRef(onRecordComplete);
   const originalVolume = useRef(1);
   const recordedVolume = useRef(1);
@@ -38,6 +39,15 @@ export const ShadowingRecorder: React.FC<ShadowingRecorderProps> = ({
   useEffect(() => {
     onRecordCompleteRef.current = onRecordComplete;
   }, [onRecordComplete]);
+
+  useEffect(() => {
+    if (!recordingState.audioUrl || !document.documentElement.classList.contains('tv-mode')) return;
+    const frame = requestAnimationFrame(() => {
+      playRecordedButtonRef.current?.focus();
+      playRecordedButtonRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [recordingState.audioUrl]);
 
   const restoreVolumes = useCallback(() => {
     if (originalAudio) originalAudio.volume = originalVolume.current;
@@ -271,6 +281,7 @@ export const ShadowingRecorder: React.FC<ShadowingRecorderProps> = ({
         </button>
         {recordingState.audioUrl && (
           <button
+            ref={playRecordedButtonRef}
             className={`${styles.controlBtn} ${isPlayingRecorded ? styles.active : ''}`}
             onClick={() => void handlePlayRecorded()}
           >
