@@ -2,8 +2,13 @@ package dev.beforesun.magicenglishbuddy.tv;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.webkit.PermissionRequest;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.view.KeyEvent;
@@ -12,11 +17,51 @@ import androidx.webkit.WebViewClientCompat;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import java.io.IOException;
+import java.util.ArrayList;
+import org.json.JSONObject;
 
 public class MainActivity extends Activity {
     private static final String ORIGIN = "https://appassets.androidplatform.net";
     private WebView webView;
     private PermissionRequest pendingAudio;
+    private SpeechRecognizer speechRecognizer;
+    private int voiceBufferBytes;
+
+    private void voiceStatus(String state, String detail) {
+        String script = "window.dispatchEvent(new CustomEvent('tv-voice-status',{detail:{state:" +
+            JSONObject.quote(state) + ",detail:" + JSONObject.quote(detail) + "}}))";
+        webView.evaluateJavascript(script, null);
+    }
+
+    private void startRemoteVoiceTest() {
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            voiceStatus("error", "盒子没有可用的语音识别服务");
+            return;
+        }
+        if (speechRecognizer != null) speechRecognizer.destroy();
+        voiceBufferBytes = 0;
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+        speechRecognizer.setRecognitionListener(new RecognitionListener() {
+            @Override public void onReadyForSpeech(Bundle params) { voiceStatus("ready", "请对着遥控器说一句英语"); }
+            @Override public void onBeginningOfSpeech() { voiceStatus("listening", "正在接收语音"); }
+            @Override public void onRmsChanged(float rmsdB) { }
+            @Override public void onBufferReceived(byte[] buffer) { voiceBufferBytes += buffer.length; }
+            @Override public void onEndOfSpeech() { voiceStatus("processing", "正在识别"); }
+            @Override public void onError(int error) { voiceStatus("error", "识别失败，错误码 " + error + "；音频回调 " + voiceBufferBytes + " 字节"); }
+            @Override public void onResults(Bundle results) {
+                ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                String text = matches == null || matches.isEmpty() ? "没有识别到词语" : matches.get(0);
+                voiceStatus("result", text + "；音频回调 " + voiceBufferBytes + " 字节");
+            }
+            @Override public void onPartialResults(Bundle partialResults) { }
+            @Override public void onEvent(int eventType, Bundle params) { }
+        });
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
+        voiceStatus("starting", "正在启动 Google TV 语音识别");
+        speechRecognizer.startListening(intent);
+    }
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -27,10 +72,23 @@ public class MainActivity extends Activity {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
         webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
+        webView.addJavascriptInterface(new Object() {
+            @JavascriptInterface public void startRemoteVoiceTest() {
+                runOnUiThread(() -> {
+                    String current = webView.getUrl();
+                    if (current != null && current.startsWith(ORIGIN + "/magic-english-buddy/"))
+                        MainActivity.this.startRemoteVoiceTest();
+                });
+            }
+        }, "TVVoice");
         WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
             .addPathHandler("/magic-english-buddy/", new WebViewAssetLoader.AssetsPathHandler(this))
             .build();
         webView.setWebViewClient(new WebViewClientCompat() {
+            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                return !url.startsWith(ORIGIN + "/magic-english-buddy/");
+            }
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 if (request.getUrl().getPath().equals("/magic-english-buddy/")) {
                     try { return new WebResourceResponse("text/html", "UTF-8", getAssets().open("index.html")); }
@@ -85,5 +143,10 @@ public class MainActivity extends Activity {
     @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) { webView.goBack(); return true; }
         return super.onKeyDown(keyCode, event);
+    }
+
+    @Override protected void onDestroy() {
+        if (speechRecognizer != null) speechRecognizer.destroy();
+        super.onDestroy();
     }
 }
