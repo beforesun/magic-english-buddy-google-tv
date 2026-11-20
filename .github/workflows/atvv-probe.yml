@@ -1,5 +1,7 @@
 name: Build ATVV Remote Probe
 on:
+  push:
+    branches: [test/atvv-remote-mic]
   workflow_dispatch:
 permissions:
   contents: read
