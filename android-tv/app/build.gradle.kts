@@ -10,6 +10,18 @@ android {
         versionCode = 1
         versionName = "0.1.0"
     }
+    signingConfigs {
+        getByName("debug") {
+            val signingPassword = System.getenv("TV_SIGN_PASS")
+            if (signingPassword != null) {
+                storeFile = file("sideload.p12")
+                storeType = "PKCS12"
+                storePassword = signingPassword
+                keyAlias = "tv"
+                keyPassword = signingPassword
+            }
+        }
+    }
 }
 
 dependencies { implementation("androidx.webkit:webkit:1.13.0") }

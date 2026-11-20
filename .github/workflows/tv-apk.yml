@@ -32,9 +32,15 @@ jobs:
         run: |
           mkdir -p android-tv/app/src/main/assets
           cp -R dist/. android-tv/app/src/main/assets/
+      - name: Prepare persistent sideload signing key
+        env:
+          TV_KEYSTORE_B64: ${{ secrets.TV_KEYSTORE_B64 }}
+        run: printf '%s' "$TV_KEYSTORE_B64" | base64 -d > android-tv/app/sideload.p12
       - name: Build sideload APK
         working-directory: android-tv
         run: gradle assembleDebug
+        env:
+          TV_SIGN_PASS: ${{ secrets.TV_SIGN_PASS }}
       - uses: actions/upload-artifact@v4
         with:
           name: magic-english-buddy-google-tv-debug-apk
