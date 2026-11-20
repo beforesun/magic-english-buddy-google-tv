@@ -36,7 +36,20 @@ const ReaderPage: React.FC = () => {
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const shadowingPanelRef = useRef<HTMLElement | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    if (!isShadowingOpen || !document.documentElement.classList.contains('tv-mode')) return;
+    const frame = requestAnimationFrame(() => {
+      const recordButton = shadowingPanelRef.current?.querySelector<HTMLButtonElement>(
+        'button[aria-label="开始录音"]'
+      );
+      recordButton?.focus();
+      recordButton?.scrollIntoView({ block: 'center', inline: 'nearest' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isShadowingOpen]);
 
   useEffect(() => setSpeed(settings.ttsSpeed), [settings.ttsSpeed]);
   useEffect(() => setShowTranslation(settings.showTranslation), [settings.showTranslation]);
@@ -276,7 +289,7 @@ const ReaderPage: React.FC = () => {
 
         <p className={styles.readingHint}>点击单词查意思 · 听完后，和伙伴一起读一读</p>
         {isShadowingOpen && (
-          <aside className={styles.shadowingPanel} aria-label="跟读录音">
+          <aside ref={shadowingPanelRef} className={styles.shadowingPanel} aria-label="跟读录音">
             <div className={styles.panelHeading}>
               <h2>跟读练习</h2>
               <button onClick={() => setIsShadowingOpen(false)}>收起</button>
