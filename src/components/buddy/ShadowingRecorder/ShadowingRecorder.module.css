@@ -122,15 +122,6 @@
   width: 100%;
   gap: var(--space-2);
 }
-.tvVoiceControls {
-  flex-direction: column;
-}
-.tvVoiceStatus {
-  margin: 0;
-  color: var(--ink-muted, var(--text-muted));
-  text-align: center;
-  overflow-wrap: anywhere;
-}
 .extraBtn {
   flex: 1;
   padding: 0 var(--space-3);

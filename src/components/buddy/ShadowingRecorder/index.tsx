@@ -304,7 +304,7 @@ export const ShadowingRecorder: React.FC<ShadowingRecorderProps> = ({
       </div>
 
       {isTvMode && (
-        <div className={`${styles.extraControls} ${styles.tvVoiceControls}`}>
+        <div className={styles.extraControls}>
           <button
             className={styles.extraBtn}
             onClick={() => {
@@ -315,7 +315,7 @@ export const ShadowingRecorder: React.FC<ShadowingRecorderProps> = ({
           >
             测试遥控器语音识别
           </button>
-          {tvVoiceStatus && <p className={styles.tvVoiceStatus} role="status">{tvVoiceStatus}</p>}
+          {tvVoiceStatus && <p role="status">{tvVoiceStatus}</p>}
         </div>
       )}
 
