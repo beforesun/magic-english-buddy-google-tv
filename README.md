@@ -1,5 +1,7 @@
 # Magic English Buddy 🧙‍♂️✨
 
+> Google TV 侧载 APK 的构建和安装说明：[GOOGLE_TV.md](GOOGLE_TV.md)。本仓库的电视适配基于 [xckevin 的原项目](https://github.com/xckevin/magic-english-buddy)。
+
 > 离线优先的儿童英语学习伙伴，让阅读、跟读、闯关和复习成为一次魔法冒险。
 
 Magic English Buddy 是一个支持安装到主屏幕的英语学习 PWA。课程、词典和学习记录保存在本机，支持多个孩子共用设备，通过独立学习档案保留各自的进度。
